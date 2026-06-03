@@ -1,0 +1,566 @@
+{
+  "name": "Recruit-AI | 3. Candidate Action Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "recruit-ai/action",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "6a12a493-efe8-4d0b-9bf2-b7fd7684c8c7",
+      "name": "Candidate Action Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        304
+      ],
+      "webhookId": "dff422df-b9ab-4e3b-809f-5e9d0ccd747c"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "JpbZ7ygxCvoGBNXn"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "candidateId",
+              "keyValue": "={{ $json.body.candidateId }}"
+            }
+          ]
+        },
+        "limit": 1
+      },
+      "id": "ad25ccf9-86eb-4b0b-890d-30f16b4d9708",
+      "name": "Load Candidate",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst candidate = $input.first().json;\nconst body = $('Candidate Action Webhook').first().json.body;\nreturn [{ json: {\n  ...candidate,\n  action: body.action,\n  interviewDate: body.interviewDate || null,\n  interviewLink: body.interviewLink || null,\n  hiringManagerName: body.hiringManagerName || 'the hiring team'\n}}];\n"
+      },
+      "id": "fa1f1c89-0cdd-4d7b-926b-18ff2c8e51f5",
+      "name": "Merge Action Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.action }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "rightValue": "SCHEDULE_INTERVIEW",
+                    "id": "738473d9-d75a-4f19-995a-72014cc1c3d5"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.action }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "rightValue": "SEND_REJECTION",
+                    "id": "551258d5-f2a9-4cb0-8ad5-509eb4a0f4ec"
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "Unknown Action"
+        }
+      },
+      "id": "e1684b30-3255-477a-944e-874d3b42d3e5",
+      "name": "Route by Action",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        672,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Write a professional, warm interview invitation email for this candidate.\n\nCandidate Name: {{ $json.candidateName }}\nJob Title: {{ $json.jobTitle }}\nInterview Date: {{ $json.interviewDate || 'TBD - we will follow up shortly' }}\nInterview Link: {{ $json.interviewLink || 'Details will be sent separately' }}\nHiring Manager: {{ $json.hiringManagerName }}\nCandidate Summary: {{ $json.summary }}\nKey Strengths: {{ $json.strengths }}\n\nWrite ONLY the email body HTML (no subject line). Make it enthusiastic but professional. Mention 1-2 of their specific strengths. Keep it under 200 words.",
+        "options": {
+          "systemMessage": "You are a professional talent acquisition specialist. Write warm, personalized, professional emails. Return only the email body as HTML, no preamble or explanation."
+        }
+      },
+      "id": "7ee14470-5b19-4c9b-a56b-1ba6153aea81",
+      "name": "Generate Interview Email",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        896,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $(\"Merge Action Data\").first().json.candidateEmail }}",
+        "subject": "={{ \"Interview Invitation: \" + $(\"Merge Action Data\").first().json.jobTitle + \" at Your Company\" }}",
+        "message": "={{ $json.output }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "2b7d01a5-eb0a-45aa-abb7-c0324a2a3a85",
+      "name": "Send Interview Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1248,
+        112
+      ],
+      "webhookId": "d58cca39-55b7-41b7-9585-96d040833dbd",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "HSkIrcbsMC8RtLPc",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "JpbZ7ygxCvoGBNXn"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "candidateId",
+              "keyValue": "={{ $(\"Merge Action Data\").first().json.candidateId }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "INTERVIEW_SCHEDULED",
+            "lastAction": "SCHEDULE_INTERVIEW",
+            "lastActionAt": "={{ new Date().toISOString() }}"
+          },
+          "schema": [
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "lastAction",
+              "displayName": "lastAction",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "lastActionAt",
+              "displayName": "lastActionAt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "886e8321-d47c-4b08-93e0-0d22a96e93ac",
+      "name": "Update - Interview Sent",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1472,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({\n  success: true,\n  action: 'SCHEDULE_INTERVIEW',\n  candidateId: $(\"Merge Action Data\").first().json.candidateId,\n  candidateName: $(\"Merge Action Data\").first().json.candidateName,\n  message: 'Interview invitation email sent successfully.'\n}) }}",
+        "options": {}
+      },
+      "id": "e6e0c165-b22c-4ff3-b4c3-7bb4820158d0",
+      "name": "Respond - Interview Sent",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1696,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Write a kind, respectful rejection email for this candidate.\n\nCandidate Name: {{ $json.candidateName }}\nJob Title: {{ $json.jobTitle }}\nCandidate Summary: {{ $json.summary }}\nTheir Strengths: {{ $json.strengths }}\n\nWrite ONLY the email body HTML (no subject line). Be empathetic and encouraging. Acknowledge their effort and mention one genuine strength. Wish them well in their search. Keep it under 150 words. Do NOT give specific reasons for rejection.",
+        "options": {
+          "systemMessage": "You are a compassionate talent acquisition specialist. Write kind, respectful rejection emails that preserve candidate dignity. Return only the HTML email body."
+        }
+      },
+      "id": "ff761a11-138c-4031-9e27-a1f7f7a8412e",
+      "name": "Generate Rejection Email",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        896,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $(\"Merge Action Data\").first().json.candidateEmail }}",
+        "subject": "={{ \"Update on Your Application: \" + $(\"Merge Action Data\").first().json.jobTitle }}",
+        "message": "={{ $json.output }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "d38ebcf5-2ff7-49f9-831a-eca46326d315",
+      "name": "Send Rejection Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1248,
+        512
+      ],
+      "webhookId": "679d74f5-a980-4b28-8d53-f296f481f7b8",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "HSkIrcbsMC8RtLPc",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "JpbZ7ygxCvoGBNXn"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "candidateId",
+              "keyValue": "={{ $(\"Merge Action Data\").first().json.candidateId }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "REJECTED",
+            "lastAction": "SEND_REJECTION",
+            "lastActionAt": "={{ new Date().toISOString() }}"
+          },
+          "schema": [
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "lastAction",
+              "displayName": "lastAction",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "lastActionAt",
+              "displayName": "lastActionAt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "41e12955-a05f-48f7-96d2-4c206dffdbeb",
+      "name": "Update - Rejection Sent",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1472,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({\n  success: true,\n  action: 'SEND_REJECTION',\n  candidateId: $(\"Merge Action Data\").first().json.candidateId,\n  candidateName: $(\"Merge Action Data\").first().json.candidateName,\n  message: 'Rejection email sent successfully.'\n}) }}",
+        "options": {}
+      },
+      "id": "1c771155-5e73-4eff-8cbc-8b603ebc2ac7",
+      "name": "Respond - Rejection Sent",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1696,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        896,
+        192
+      ],
+      "id": "5cc51874-4a08-402b-b061-26cf2fe8b03e",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "bNEq6OR3YtoCGsSM",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        896,
+        736
+      ],
+      "id": "756ce290-f4e0-4757-abd5-03e13b1587ab",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "bNEq6OR3YtoCGsSM",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Candidate Action Webhook": {
+      "main": [
+        [
+          {
+            "node": "Load Candidate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Candidate": {
+      "main": [
+        [
+          {
+            "node": "Merge Action Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Action Data": {
+      "main": [
+        [
+          {
+            "node": "Route by Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Action": {
+      "main": [
+        [
+          {
+            "node": "Generate Interview Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Generate Rejection Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Interview Email": {
+      "main": [
+        [
+          {
+            "node": "Send Interview Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Interview Email": {
+      "main": [
+        [
+          {
+            "node": "Update - Interview Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update - Interview Sent": {
+      "main": [
+        [
+          {
+            "node": "Respond - Interview Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Rejection Email": {
+      "main": [
+        [
+          {
+            "node": "Send Rejection Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Rejection Email": {
+      "main": [
+        [
+          {
+            "node": "Update - Rejection Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update - Rejection Sent": {
+      "main": [
+        [
+          {
+            "node": "Respond - Rejection Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate Interview Email",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate Rejection Email",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "2df7e781-ab8f-4dfb-82d7-145f71062057",
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp",
+    "templateCredsSetupCompleted": true,
+    "instanceId": "32c76453173b63f9651081d337956d4e54ac1fe94d5b7e7d86f139bc4b97b53e"
+  },
+  "id": "teO3roojkWflHeWQ",
+  "tags": []
+}

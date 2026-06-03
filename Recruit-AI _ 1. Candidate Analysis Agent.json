@@ -1,0 +1,363 @@
+{
+  "name": "Recruit-AI | 1. Candidate Analysis Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "recruit-ai/analyze",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "a1dca0df-0602-4ac8-96d4-bcf0e87d6f57",
+      "name": "Analyze Candidate Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        112
+      ],
+      "webhookId": "cba1eb93-f833-479e-91d5-2252641b66b8"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst body = $input.first().json.body;\nconst required = ['jobDescription', 'resumeText', 'candidateName', 'candidateEmail', 'clientUserId', 'jobTitle'];\nfor (const field of required) {\n  if (!body[field]) throw new Error('Missing required field: ' + field);\n}\nconst candidateId = 'cand_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);\nreturn [{ json: {\n  candidateId,\n  clientUserId: body.clientUserId,\n  candidateName: body.candidateName,\n  candidateEmail: body.candidateEmail,\n  jobTitle: body.jobTitle,\n  jobDescription: body.jobDescription,\n  resumeText: body.resumeText\n}}];\n"
+      },
+      "id": "f8d73d35-6194-4662-81c5-5d7f744b14f6",
+      "name": "Validate & Prepare",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an expert technical recruiter AI. Analyze the following resume against the job description.\n\nJOB TITLE: {{ $json.jobTitle }}\n\nJOB DESCRIPTION:\n{{ $json.jobDescription }}\n\nRESUME:\n{{ $json.resumeText }}\n\nReturn a JSON object with:\n- fitScore: number 0-100\n- recommendedAction: one of \"SCHEDULE_INTERVIEW\", \"SEND_REJECTION\", or \"NEEDS_REVIEW\"\n- summary: 2-3 sentence overview\n- strengths: key strengths relevant to the role (comma-separated)\n- gaps: missing skills or experience (comma-separated, or \"None identified\")",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an objective, expert technical recruiter AI. Always return valid JSON matching the requested schema exactly. Base assessments purely on skills and experience match, avoiding bias."
+        }
+      },
+      "id": "f4ffe5c5-f672-4386-81c0-76ee5a1fe24a",
+      "name": "Resume Analysis Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        448,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\"fitScore\": 85, \"recommendedAction\": \"SCHEDULE_INTERVIEW\", \"summary\": \"Strong candidate with relevant experience.\", \"strengths\": \"5 years React, led team of 4\", \"gaps\": \"No AWS experience mentioned\"}"
+      },
+      "id": "94aad215-4547-4006-a3b2-a2460dade64c",
+      "name": "Resume Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        592,
+        336
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst agentOutput = $input.first().json.output || $input.first().json;\nconst prev = $('Validate & Prepare').first().json;\nconst now = new Date().toISOString();\nreturn [{ json: {\n  candidateId: prev.candidateId,\n  clientUserId: prev.clientUserId,\n  candidateName: prev.candidateName,\n  candidateEmail: prev.candidateEmail,\n  jobTitle: prev.jobTitle,\n  fitScore: Number(agentOutput.fitScore) || 0,\n  recommendedAction: agentOutput.recommendedAction || 'NEEDS_REVIEW',\n  summary: agentOutput.summary || '',\n  strengths: agentOutput.strengths || '',\n  gaps: agentOutput.gaps || '',\n  status: 'ANALYZED',\n  lastAction: 'ANALYZED',\n  lastActionAt: now\n}}];\n"
+      },
+      "id": "12bb4074-df5b-48fa-b964-e459042852bf",
+      "name": "Normalize & Merge",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "JpbZ7ygxCvoGBNXn"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "candidateId": "={{ $json.candidateId }}",
+            "clientUserId": "={{ $json.clientUserId }}",
+            "candidateName": "={{ $json.candidateName }}",
+            "candidateEmail": "={{ $json.candidateEmail }}",
+            "jobTitle": "={{ $json.jobTitle }}",
+            "fitScore": "={{ $json.fitScore }}",
+            "recommendedAction": "={{ $json.recommendedAction }}",
+            "summary": "={{ $json.summary }}",
+            "strengths": "={{ $json.strengths }}",
+            "gaps": "={{ $json.gaps }}",
+            "status": "={{ $json.status }}",
+            "lastAction": "={{ $json.lastAction }}",
+            "lastActionAt": "={{ $json.lastActionAt }}"
+          },
+          "schema": [
+            {
+              "id": "candidateId",
+              "displayName": "candidateId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "clientUserId",
+              "displayName": "clientUserId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "candidateName",
+              "displayName": "candidateName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "candidateEmail",
+              "displayName": "candidateEmail",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "jobTitle",
+              "displayName": "jobTitle",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fitScore",
+              "displayName": "fitScore",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "recommendedAction",
+              "displayName": "recommendedAction",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "summary",
+              "displayName": "summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "strengths",
+              "displayName": "strengths",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "gaps",
+              "displayName": "gaps",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "lastAction",
+              "displayName": "lastAction",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "lastActionAt",
+              "displayName": "lastActionAt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4b026e72-2e94-4f08-ad9c-8fdece1f7942",
+      "name": "Save Candidate",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1024,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({\n  success: true,\n  candidateId: $('Normalize & Merge').first().json.candidateId,\n  candidateName: $('Normalize & Merge').first().json.candidateName,\n  fitScore: $('Normalize & Merge').first().json.fitScore,\n  recommendedAction: $('Normalize & Merge').first().json.recommendedAction,\n  summary: $('Normalize & Merge').first().json.summary,\n  strengths: $('Normalize & Merge').first().json.strengths,\n  gaps: $('Normalize & Merge').first().json.gaps\n}) }}",
+        "options": {}
+      },
+      "id": "c9086d0d-82d9-46f3-89d1-e8f9ead88cc4",
+      "name": "Respond with Analysis",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1248,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        304,
+        320
+      ],
+      "id": "6ecec8a9-6541-4cd2-8e65-47efc7ababba",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "bNEq6OR3YtoCGsSM",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Analyze Candidate Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate & Prepare",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate & Prepare": {
+      "main": [
+        [
+          {
+            "node": "Resume Analysis Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resume Analysis Agent": {
+      "main": [
+        [
+          {
+            "node": "Normalize & Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resume Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Resume Analysis Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize & Merge": {
+      "main": [
+        [
+          {
+            "node": "Save Candidate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Candidate": {
+      "main": [
+        [
+          {
+            "node": "Respond with Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Resume Analysis Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "d315dabf-4184-4f2d-8ba2-2701c5ae1837",
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp",
+    "templateCredsSetupCompleted": true,
+    "instanceId": "32c76453173b63f9651081d337956d4e54ac1fe94d5b7e7d86f139bc4b97b53e"
+  },
+  "id": "MGuWBrewtL2OT7xj",
+  "tags": []
+}

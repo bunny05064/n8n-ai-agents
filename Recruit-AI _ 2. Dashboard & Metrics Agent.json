@@ -1,0 +1,128 @@
+{
+  "name": "Recruit-AI | 2. Dashboard & Metrics Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "recruit-ai/candidates",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "c21a1afc-fda1-41dd-8dbc-5db6ee9e0e6e",
+      "name": "List Candidates Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "955cad51-647e-4aeb-b9d4-397898c4e211"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "JpbZ7ygxCvoGBNXn"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "clientUserId",
+              "keyValue": "={{ $json.body.clientUserId }}"
+            }
+          ]
+        },
+        "returnAll": true
+      },
+      "id": "725b6eea-59a7-40d0-9378-c748624d384d",
+      "name": "Fetch Candidates",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst items = $input.all();\nconst candidates = items.map(i => i.json);\nconst total = candidates.length;\nconst interviews = candidates.filter(c => c.recommendedAction === 'SCHEDULE_INTERVIEW').length;\nconst rejections = candidates.filter(c => c.recommendedAction === 'SEND_REJECTION').length;\nconst pending = candidates.filter(c => c.recommendedAction === 'NEEDS_REVIEW').length;\nconst avgFit = total > 0 ? Math.round(candidates.reduce((s, c) => s + (Number(c.fitScore) || 0), 0) / total) : 0;\nconst recent = candidates\n  .sort((a, b) => new Date(b.lastActionAt || 0) - new Date(a.lastActionAt || 0))\n  .slice(0, 10);\nreturn [{ json: {\n  stats: { total, interviews, rejections, pending, avgFitScore: avgFit },\n  recentCandidates: recent\n}}];\n"
+      },
+      "id": "e7f0a3d5-4c39-41e5-bbab-3589bd51f6f3",
+      "name": "Compute Metrics",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({\n  success: true,\n  stats: $json.stats,\n  recentCandidates: $json.recentCandidates\n}) }}",
+        "options": {}
+      },
+      "id": "ea96da27-7da7-454c-917d-40c358ee38b1",
+      "name": "Respond with Dashboard",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        672,
+        0
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "List Candidates Webhook": {
+      "main": [
+        [
+          {
+            "node": "Fetch Candidates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Candidates": {
+      "main": [
+        [
+          {
+            "node": "Compute Metrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute Metrics": {
+      "main": [
+        [
+          {
+            "node": "Respond with Dashboard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "06e13e05-ba8e-4ad9-b27c-2f88972a8cab",
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp",
+    "instanceId": "32c76453173b63f9651081d337956d4e54ac1fe94d5b7e7d86f139bc4b97b53e"
+  },
+  "id": "zuXBaB53WodVEjnB",
+  "tags": []
+}
