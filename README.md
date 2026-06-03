@@ -147,7 +147,7 @@ POST /recruit-ai/candidates
 ### Candidate Analysis Agent
 Analyzes resumes against job descriptions, generates fit scores, identifies strengths and gaps, and recommends hiring actions.
 
-![Candidate Analysis Workflow](./screenshots/candidate-analysis.png)
+
 
 <img width="1464" height="783" alt="Screenshot 2026-06-03 at 7 03 50 AM" src="https://github.com/user-attachments/assets/919a80ff-d244-45b5-be41-1c3efd31185f" />
 
@@ -155,15 +155,55 @@ Analyzes resumes against job descriptions, generates fit scores, identifies stre
 ### Candidate Action Agent
 Automates interview scheduling and rejection workflows with personalized AI-generated emails.
 
-![Candidate Action Workflow](./screenshots/candidate-action.png)
+<img width="1470" height="787" alt="Screenshot 2026-06-03 at 7 09 36 AM" src="https://github.com/user-attachments/assets/d59fd0e8-4de3-4ce0-a07d-c9b6108d030f" />
+
 
 ### Dashboard & Metrics Agent
 Provides real-time recruitment insights including candidate counts, interview recommendations, rejection rates, and average fit scores.
 
-![Dashboard Workflow](./screenshots/dashboard-metrics.png)
-### Author
+<img width="1467" height="790" alt="Screenshot 2026-06-03 at 7 07 54 AM" src="https://github.com/user-attachments/assets/f580c405-d2b1-4054-b70d-5e539d3a24b2" />
 
-**Somya Tripathi**
+## 🏗️ System Architecture
 
-Product & AI Enthusiast | Building AI-Powered Automation Solutions
+```text
+                        Recruit-AI
+
+      Resume + Job Description Input
+                    │
+                    ▼
+        Candidate Analysis Agent
+                    │
+                    ▼
+            Google Gemini AI
+                    │
+                    ▼
+        Candidate Evaluation Data
+                    │
+                    ▼
+             Candidate Database
+                    │
+        ┌───────────┴───────────┐
+        │                       │
+        ▼                       ▼
+Interview Decision      Rejection Decision
+        │                       │
+        ▼                       ▼
+ AI Interview Email      AI Rejection Email
+        │                       │
+        └───────────┬───────────┘
+                    ▼
+              Gmail API
+                    │
+                    ▼
+          Candidate Communication
+
+                    │
+                    ▼
+
+         Dashboard & Metrics Agent
+                    │
+                    ▼
+        Recruitment Analytics
+
+
 
