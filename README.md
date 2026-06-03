@@ -41,31 +41,7 @@ Built using **n8n, Google Gemini, JavaScript, Gmail API, and Webhooks**, the sys
 * **Email Automation:** Gmail API
 * **Data Storage:** n8n Data Tables
 * **API Layer:** Webhooks
-
----
-
-## ⚙️ Workflow
-
-```text
-Resume + Job Description
-            ↓
-   Candidate Analysis Agent
-            ↓
-      AI Evaluation
-            ↓
-      Fit Score & Insights
-            ↓
-       Candidate Database
-            ↓
-      Decision Engine
-      ↙            ↘
-Interview      Rejection
-      ↘            ↙
-     Email Automation
-            ↓
- Recruitment Dashboard
-```
-
+  
 ---
 
 ## 📌 API Endpoints
@@ -166,7 +142,7 @@ Provides real-time recruitment insights including candidate counts, interview re
 ## 🏗️ System Architecture
 
 ```text
-                        Recruit-AI
+               Recruit-AI
 
       Resume + Job Description Input
                     │
@@ -203,7 +179,8 @@ Interview Decision      Rejection Decision
          Dashboard & Metrics Agent
                     │
                     ▼
-        Recruitment Analytics
+          Recruitment Analytics
+```
 
 
 
