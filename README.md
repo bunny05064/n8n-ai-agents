@@ -1,6 +1,6 @@
 # Recruit-AI 🤖
 
-An AI-powered recruitment automation system built with n8n, Gemini, Gmail API, and JavaScript.
+AI-powered recruitment automation system that screens resumes, recommends hiring decisions, sends personalized candidate emails, and tracks hiring metrics using Gemini + n8n.
 
 ## Features
 
