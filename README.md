@@ -147,7 +147,5 @@ POST /recruit-ai/candidates
 
 **Somya Tripathi**
 
-
-
 Product & AI Enthusiast | Building AI-Powered Automation Solutions
 
