@@ -142,7 +142,25 @@ POST /recruit-ai/candidates
 * Recruiter Copilot Chat Interface
 
 ---
+## 📸 Workflow Screenshots
 
+### Candidate Analysis Agent
+Analyzes resumes against job descriptions, generates fit scores, identifies strengths and gaps, and recommends hiring actions.
+
+![Candidate Analysis Workflow](./screenshots/candidate-analysis.png)
+
+<img width="1464" height="783" alt="Screenshot 2026-06-03 at 7 03 50 AM" src="https://github.com/user-attachments/assets/919a80ff-d244-45b5-be41-1c3efd31185f" />
+
+
+### Candidate Action Agent
+Automates interview scheduling and rejection workflows with personalized AI-generated emails.
+
+![Candidate Action Workflow](./screenshots/candidate-action.png)
+
+### Dashboard & Metrics Agent
+Provides real-time recruitment insights including candidate counts, interview recommendations, rejection rates, and average fit scores.
+
+![Dashboard Workflow](./screenshots/dashboard-metrics.png)
 ### Author
 
 **Somya Tripathi**
